@@ -52,16 +52,51 @@ fn main() {
 
         // **OPTION**
         // Brighten -- see the brighten() function below
+        "brighten" => {
+            if args.len() != 3 {
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            let brightness = args.remove(0).parse::<i32>().unwrap();
 
+            brighten(infile,outfile, brightness)
+        }
         // **OPTION**
         // Crop -- see the crop() function below
-
+        "crop" => {
+            if args.len() != 6 {
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            let x = args.remove(0).parse::<u32>().unwrap();
+            let y = args.remove(0).parse::<u32>().unwrap();
+            let width = args.remove(0).parse::<u32>().unwrap();
+            let height = args.remove(0).parse::<u32>().unwrap();
+            crop(infile, outfile, x, y, width, height)
+        }
         // **OPTION**
         // Rotate -- see the rotate() function below
-
+        "rotate" => {
+            if args.len() != 3 {
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            let degrees = args.remove(0).parse::<u32>().unwrap();
+            if !(degrees == 90 || degrees == 180 || degrees == 270) {
+                print_usage_and_exit();
+            }
+            rotate(infile, outfile, degrees);
+        }
         // **OPTION**
         // Invert -- see the invert() function below
-
+        "invert" => {
+            if args.len() != 2 {
+                print_usage_and_exit();
+            }
+        }
         // **OPTION**
         // Grayscale -- see the grayscale() function below
 
@@ -87,6 +122,9 @@ fn main() {
 fn print_usage_and_exit() {
     println!("USAGE (when in doubt, use a .png extension on your filenames)");
     println!("blur INFILE OUTFILE");
+    println!("brighten INFILE OUTFILE BRIGHTNESS_INCREASE");
+    println!("crop INFILE OUTFILE X Y WIDTH HEIGHT");
+    println!("rotate INFILE OUTFILE {{90/180/270}}");
     println!("fractal OUTFILE");
     // **OPTION**
     // Print useful information about what subcommands and arguments you can use
@@ -105,40 +143,47 @@ fn blur(infile: String, outfile: String) {
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
-fn brighten(infile: String, outfile: String) {
+fn brighten(infile: String, outfile: String, bright_factor: i32) {
     // See blur() for an example of how to open / save an image.
-
+    let img = image::open(infile).expect("Failed to open INFILE");
     // .brighten() takes one argument, an i32.  Positive numbers brighten the
     // image. Negative numbers darken it.  It returns a new image.
-
+    let img2 = img.brighten(bright_factor);
     // Challenge: parse the brightness amount from the command-line and pass it
     // through to this function.
+    img2.save(outfile).expect("Failed writing OUTFILE");
 }
 
-fn crop(infile: String, outfile: String) {
+fn crop(infile: String, outfile: String, x:u32, y: u32, width: u32, height: u32) {
     // See blur() for an example of how to open an image.
-
+    let mut img = image::open(infile).expect("Failed to open INFILE");
     // .crop() takes four arguments: x: u32, y: u32, width: u32, height: u32
     // You may hard-code them, if you like.  It returns a new image.
-
+    let img2 = img.crop(x, y, width, height);
     // Challenge: parse the four values from the command-line and pass them
-    // through to this function.
-
+    // through to this function.   
+    img2.save(outfile).expect("Failed writing OUTFILE");
     // See blur() for an example of how to save the image.
 }
 
-fn rotate(infile: String, outfile: String) {
+fn rotate(infile: String, outfile: String, degrees: u32) {
     // See blur() for an example of how to open an image.
-
+    let img = image::open(infile).expect("Failed to open INFILE");
     // There are 3 rotate functions to choose from (all clockwise):
     //   .rotate90()
     //   .rotate180()
     //   .rotate270()
     // All three methods return a new image.  Pick one and use it!
-
+    
+    let img2 = match degrees {
+        90 => img.rotate90(),
+        180 => img.rotate180(),
+        270 => img.rotate270(),
+        _ => img //Unreachable
+    };
     // Challenge: parse the rotation amount from the command-line, pass it
     // through to this function to select which method to call.
-
+    img2.save(outfile).expect("Failed writing OUTFILE");
     // See blur() for an example of how to save the image.
 }
 
