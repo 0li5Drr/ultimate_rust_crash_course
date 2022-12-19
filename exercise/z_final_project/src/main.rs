@@ -96,9 +96,20 @@ fn main() {
             if args.len() != 2 {
                 print_usage_and_exit();
             }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            invert(infile, outfile);
         }
         // **OPTION**
         // Grayscale -- see the grayscale() function below
+        "grayscale" => {
+            if args.len() != 2 {
+                print_usage_and_exit();
+            }
+            let infile= args.remove(0);
+            let outfile = args.remove(0);
+            grayscale(infile, outfile);
+        }
 
         // A VERY DIFFERENT EXAMPLE...a really fun one. :-)
         "fractal" => {
@@ -111,7 +122,21 @@ fn main() {
 
         // **OPTION**
         // Generate -- see the generate() function below -- this should be sort of like "fractal()"!
-
+        "generate" => {
+            if args.len() != 4 {
+                print_usage_and_exit();
+            }
+            let outfile = args.remove(0);
+            let r = args.remove(0).parse::<f32>().unwrap();
+            let g = args.remove(0).parse::<f32>().unwrap();
+            let b = args.remove(0).parse::<f32>().unwrap();
+            for factor in [r,g,b] {
+                if factor < 0.0 || factor > 1.0 {
+                    print_usage_and_exit();
+                }
+            }
+            generate(outfile, r, g, b);
+        }
         // For everything else...
         _ => {
             print_usage_and_exit();
@@ -125,6 +150,7 @@ fn print_usage_and_exit() {
     println!("brighten INFILE OUTFILE BRIGHTNESS_INCREASE");
     println!("crop INFILE OUTFILE X Y WIDTH HEIGHT");
     println!("rotate INFILE OUTFILE {{90/180/270}}");
+    println!("generate redFactor greenFactor blueFactor (Factor between 0 and 1)");
     println!("fractal OUTFILE");
     // **OPTION**
     // Print useful information about what subcommands and arguments you can use
@@ -189,26 +215,36 @@ fn rotate(infile: String, outfile: String, degrees: u32) {
 
 fn invert(infile: String, outfile: String) {
     // See blur() for an example of how to open an image.
-
+    let mut img = image::open(infile).expect("Failed to open INFILE");
     // .invert() takes no arguments and converts the image in-place, so you
     // will use the same image to save out to a different file.
-
+    img.invert();
+    img.save(outfile).expect("Failed writing OUTFILE")
     // See blur() for an example of how to save the image.
 }
 
 fn grayscale(infile: String, outfile: String) {
     // See blur() for an example of how to open an image.
-
+    let img = image::open(infile).expect("Failed to open INFILE");
     // .grayscale() takes no arguments. It returns a new image.
-
+    let img2 = img.grayscale();
+    img2.save(outfile).expect("Failed to write OUTFILE");
     // See blur() for an example of how to save the image.
 }
 
-fn generate(outfile: String) {
+fn generate(outfile: String, red_grad: f32, green_grad: f32, blue_grad: f32) {
     // Create an ImageBuffer -- see fractal() for an example
-
+    let (width, height) = (800, 800);
+    let mut imgbuff = image::ImageBuffer::new(width, height);
     // Iterate over the coordinates and pixels of the image -- see fractal() for an example
+    for (x, y, pixel) in imgbuff.enumerate_pixels_mut() {
+        let red = (red_grad * x as f32) as u8;
+        let blue = (blue_grad * y as f32) as u8;
+        let green = (green_grad * ((x*x + y*y) as f32).sqrt()) as u8;
 
+        *pixel = image::Rgb([red, green, blue]);
+    }
+    imgbuff.save(outfile).expect("Failed to write OUTFILE");
     // Set the image to some solid color. -- see fractal() for an example
 
     // Challenge: parse some color data from the command-line, pass it through
@@ -231,7 +267,7 @@ fn fractal(outfile: String) {
 
     // Iterate over the coordinates and pixels of the image
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        // Use red and blue to be a pretty gradient background
+        // Use red and blue to be a pretty Gradient background
         let red = (0.3 * x as f32) as u8;
         let blue = (0.3 * y as f32) as u8;
 
